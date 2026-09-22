@@ -12,6 +12,7 @@ import {
   runnerEvent,
 } from "../src/runner-protocol.js";
 
+/** @param {Record<string, unknown>} message */
 function send(message) {
   self.postMessage(runnerEvent(message));
 }

@@ -16,13 +16,25 @@ import {
   writeInputLine,
 } from "../src/index.js";
 
-const output = document.getElementById("output");
-const input = document.getElementById("input");
-const cursor = document.getElementById("cursor");
-const screen = document.getElementById("screen");
-const terminalContainer = document.getElementById("terminal-container");
-const terminalInput = document.getElementById("terminal-input");
-const status = document.getElementById("status");
+/**
+ * @param {string} id
+ * @returns {HTMLElement} the element; throws when the markup is missing it
+ */
+function element(id) {
+  const found = document.getElementById(id);
+  if (!found) throw new Error(`demo is missing #${id}`);
+  return found;
+}
+
+const output = element("output");
+const input = element("input");
+const cursor = element("cursor");
+const screen = element("screen");
+const terminalContainer = element("terminal-container");
+const terminalInput = /** @type {HTMLInputElement} */ (
+  element("terminal-input")
+);
+const status = element("status");
 
 /** @param {string} message */
 function setStatus(message) {
@@ -57,6 +69,7 @@ let sharedBuffer;
 /** @type {Uint8Array | undefined} */
 let sharedKeys;
 
+/** @param {string} value */
 function handleLine(value) {
   if (!worker || !sharedBuffer || !sharedKeys) return;
   writeInputLine(sharedKeys, value);
@@ -78,6 +91,7 @@ function boot() {
   };
 
   worker.onmessage = (event) => {
+    if (!worker || !sharedBuffer || !sharedKeys) return;
     const data = runnerEvent(event.data);
     if (data.type === "READY") {
       worker.postMessage(
