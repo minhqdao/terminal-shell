@@ -36,7 +36,7 @@
   },
   "scripts": {
     "dev": "npx -y serve . -l 3000",
-    "test": "node --test test/",
+    "test": "node --test",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "format": "prettier --write .",
