@@ -32,6 +32,7 @@
     "./terminal-render": "./src/terminal-render.js",
     "./terminal-scroll": "./src/terminal-scroll.js",
     "./terminal-selection": "./src/terminal-selection.js",
+    "./terminal-shell": "./src/terminal-shell.js",
     "./terminal-text": "./src/terminal-text.js"
   },
   "scripts": {

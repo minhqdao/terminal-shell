@@ -21,6 +21,8 @@ Create a shell by providing the elements it controls and callbacks for
 the engine:
 
 ```js
+import { createTerminalShell } from "terminal-shell";
+
 const shell = createTerminalShell({
   screen,
   output,
