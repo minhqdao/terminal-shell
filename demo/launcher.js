@@ -71,6 +71,12 @@ function boot() {
   sharedBuffer = new Int32Array(new SharedArrayBuffer(4));
   sharedKeys = new Uint8Array(createKeysBuffer());
 
+  // A module worker that fails to load (bad import, 404) only fires this,
+  // never onmessage: without it the terminal just stays blank.
+  worker.onerror = (event) => {
+    setStatus(event.message || "The engine worker failed to load.");
+  };
+
   worker.onmessage = (event) => {
     const data = runnerEvent(event.data);
     if (data.type === "READY") {

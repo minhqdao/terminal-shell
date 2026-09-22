@@ -10,7 +10,7 @@ import {
   readInputLine,
   runnerCommand,
   runnerEvent,
-} from "./runner-protocol.js";
+} from "../src/runner-protocol.js";
 
 function send(message) {
   self.postMessage(runnerEvent(message));
