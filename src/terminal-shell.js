@@ -88,6 +88,10 @@ import { toEngineText } from "./terminal-text.js";
  * @property {string} [nativeLogDataset] dataset key (camelCase) that, when
  *   set to "native" on the document element under Android, switches the
  *   transcript to the platform's own scroller; e.g. "adventureLog".
+ * @property {(text: string, atLineStart: boolean) => string} [transformOutput]
+ *   the per-chunk transcript transform. Defaults to the FORTRAN-flavored
+ *   sanitize + single-leading-space strip; hosts whose engines print
+ *   significant leading spaces (BASIC listings) sanitize only.
  */
 
 /**
@@ -106,6 +110,9 @@ import { toEngineText } from "./terminal-text.js";
  * @property {(options?: { force?: boolean }) => void} focusInput focuses
  *   the hidden field; `force` marks a gesture focus (the only kind that
  *   raises iOS's soft keyboard from a closed state).
+ * @property {() => void} endInput the engine stopped asking for input
+ *   (error, exit, startup failure): drop the wait and repaint, keeping
+ *   the transcript as it is.
  * @property {() => boolean} isWaitingForInput whether the shell is
  *   currently collecting a line.
  */
@@ -226,6 +233,8 @@ export function createTerminalShell(options) {
     onLine,
     onFirstOutput,
     normalizeLine = toEngineText,
+    transformOutput = (text, atLineStart) =>
+      stripLineLeadingSpace(sanitizeTerminalOutput(text), atLineStart),
     maxInputLength = 254,
     keyboardHeightKey = KEYBOARD_HEIGHT_KEY,
     nativeLogDataset,
@@ -259,10 +268,7 @@ export function createTerminalShell(options) {
     pendingInputSeparator = false;
 
     const atLineStart = terminalText === "" || terminalText.endsWith("\n");
-    terminalText += stripLineLeadingSpace(
-      sanitizeTerminalOutput(text),
-      atLineStart,
-    );
+    terminalText += transformOutput(text, atLineStart);
     scheduleOutputRender();
   }
 
@@ -1256,6 +1262,16 @@ export function createTerminalShell(options) {
     { passive: false },
   );
 
+  /**
+   * The engine stopped asking for input (error, exit, startup failure):
+   * drop the wait and repaint, keeping the transcript as it is. The field
+   * keeps its text; the next beginInput clears it.
+   */
+  function endInput() {
+    waitingForInput = false;
+    render();
+  }
+
   function flushOutputRender() {
     outputRenderer.flush();
   }
@@ -1286,6 +1302,7 @@ export function createTerminalShell(options) {
       render();
       screen.scrollTop = 0;
     },
+    endInput,
     flushOutputRender,
     cancelOutputRender,
     focusInput(options) {

@@ -43,7 +43,13 @@ test("writeInputLine enforces the printable-ASCII contract", () => {
   // byte silently if they ever reached the buffer -- they are rejected
   // whole instead (the previous line's length slot stays untouched).
   writeInputLine(view, "PREVIOUS\n");
-  for (const bad of ["CAF\u00c9\n", "A\tB\n", "A\r\n", "X\u{1F389}\n"]) {
+  for (const bad of [
+    "CAF\u00c9\n",
+    "A\tB\n",
+    "A\r\n",
+    "X\u{1F389}\n",
+    "DEL\u007f\n", // U+007F is not printable ASCII either
+  ]) {
     assert.throws(() => writeInputLine(view, bad), /printable ASCII/);
     assert.equal(
       readInputLine(view),

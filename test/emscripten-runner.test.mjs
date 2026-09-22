@@ -117,6 +117,50 @@ test("a null line is EOF: stdin reports null and never asks again", async () => 
   assert.deepEqual(events.at(-1), { type: "EXIT" });
 });
 
+test("bare carriage returns are dropped mid-line", async () => {
+  const events = await run([null], [{ print: "A\rB\n" }]);
+  assert.deepEqual(
+    events.filter((e) => e.type === "STDOUT"),
+    [{ type: "STDOUT", text: "AB\n" }],
+  );
+});
+
+test("a rejected module factory propagates to the caller", async () => {
+  // The worker wraps this call and reports it as an ERROR event.
+  await assert.rejects(
+    startEmscriptenRunner({
+      createModule: () => Promise.reject(new Error("wasm 404")),
+      send() {},
+      readLine: () => null,
+      waitForLine() {},
+    }),
+    /wasm 404/,
+  );
+});
+
+test("a throwing main propagates after STARTED", async () => {
+  const events = [];
+  await assert.rejects(
+    startEmscriptenRunner({
+      createModule: async (options) => {
+        const preRun = /** @type {{ preRun?: (mod: any) => void }} */ (options)
+          .preRun;
+        preRun?.({ FS: { init() {} } });
+        return {
+          callMain() {
+            throw new Error("SIGSEGV");
+          },
+        };
+      },
+      send: (message) => events.push(message),
+      readLine: () => null,
+      waitForLine() {},
+    }),
+    /SIGSEGV/,
+  );
+  assert.equal(events.at(-1)?.type, "STARTED", "STARTED went out before main");
+});
+
 test("pending stdout flushes before the input request", async () => {
   const events = await run(
     ["N\n"],

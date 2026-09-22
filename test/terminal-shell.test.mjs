@@ -12,6 +12,12 @@ import test from "node:test";
 import { JSDOM } from "jsdom";
 
 import { createTerminalShell } from "../src/terminal-shell.js";
+import { sanitizeTerminalOutput } from "../src/terminal-output.js";
+import {
+  createKeysBuffer,
+  readInputLine,
+  writeInputLine,
+} from "../src/runner-protocol.js";
 
 /**
  * One jsdom document per test, wired the way a host page wires it. The
@@ -323,6 +329,26 @@ test("mobile Enter (insertLineBreak) submits the line", () => {
   assert.equal(shell.isWaitingForInput(), false);
 });
 
+test("endInput drops the wait but keeps the transcript and field", () => {
+  const { shell, input, fireInput, echoText } = openShell();
+  shell.beginInput();
+
+  input.value = "LOOK";
+  fireInput();
+  shell.appendOutput("A DWARF SAYS: EXIT");
+  shell.endInput();
+
+  assert.equal(shell.isWaitingForInput(), false, "the wait is dropped");
+  assert.ok(
+    input.ownerDocument
+      .getElementById("output")
+      ?.textContent?.includes("A DWARF SAYS: EXIT"),
+    "the transcript is untouched",
+  );
+  assert.equal(input.value, "LOOK", "the field keeps its text");
+  assert.equal(echoText(), "", "the echo line is cleared");
+});
+
 test("appendOutput fires the first-output hook once and reset re-arms it", () => {
   const { shell, firstOutputCount } = openShell();
 
@@ -338,6 +364,107 @@ test("appendOutput fires the first-output hook once and reset re-arms it", () =>
   assert.equal(firstOutputCount(), 1);
   shell.appendOutput("NEXT\n");
   assert.equal(firstOutputCount(), 2, "reset re-arms the hook");
+});
+
+test("an empty submit reaches the engine as a bare newline", () => {
+  const { shell, lines, fireEnter } = openShell();
+  shell.beginInput();
+
+  fireEnter();
+  assert.deepEqual(lines, ["\n"], "games answer blank lines too");
+});
+
+test("a second Enter while not waiting is ignored", () => {
+  const { shell, input, lines, fireInput, fireEnter } = openShell();
+  shell.beginInput();
+
+  input.value = "LOOK";
+  fireInput();
+  fireEnter();
+  fireEnter();
+  assert.deepEqual(lines, ["LOOK\n"], "the wait guard eats the repeat");
+});
+
+test("typing before beginInput is not echoed or submitted", () => {
+  const { shell, input, lines, fireInput, fireEnter, echoText } = openShell();
+
+  input.value = "EARLY";
+  fireInput();
+  fireEnter();
+  assert.deepEqual(lines, [], "no line reaches the engine before it asks");
+  assert.equal(echoText(), "", "the echo stays empty");
+
+  shell.beginInput();
+  assert.equal(input.value, "", "beginInput clears the stale field text");
+});
+
+test("a cancelled composition re-arms plain typing", () => {
+  const { shell, input, fireInput, fireComposition, echoText } = openShell();
+  shell.beginInput();
+
+  fireComposition("compositionstart");
+  input.value = "á";
+  fireInput();
+  input.value = "";
+  fireInput();
+  fireComposition("compositionend");
+  assert.equal(echoText(), "", "the cancelled composition leaves no echo");
+
+  input.value = "N";
+  fireInput();
+  assert.equal(echoText(), "N", "typing works after the cancel");
+});
+
+test("an upper-case-expanding character respects the cap", () => {
+  // ß upper-cases to SS: three chars become six before the cap bites.
+  const { shell, input, lines, fireInput, fireEnter, echoText } = openShell({
+    maxInputLength: 4,
+  });
+  shell.beginInput();
+
+  input.value = "ßßß";
+  fireInput();
+  assert.equal(echoText(), "SSSS");
+  fireEnter();
+  assert.deepEqual(lines, ["SSSS\n"]);
+});
+
+test("a capped line fits the runner buffer end to end", () => {
+  const { shell, input, lines, fireInput, fireEnter } = openShell();
+  const view = new Uint8Array(createKeysBuffer());
+  shell.beginInput();
+
+  input.value = "W".repeat(300);
+  fireInput();
+  fireEnter();
+
+  assert.equal(lines[0].length, 255, "254 characters plus the newline");
+  writeInputLine(view, lines[0]);
+  assert.equal(readInputLine(view), lines[0], "round trips through the wire");
+});
+
+test("the default transform strips the FORTRAN leading space", () => {
+  const { shell, document_ } = openShell();
+
+  // FORTRAN FORMAT records carry a carriage-control leading space; the
+  // default transform drops it at line starts (colossal-cave/oregon).
+  shell.appendOutput(" HELLO");
+  shell.flushOutputRender();
+  const output = document_.getElementById("output");
+  assert.equal(output?.textContent, "HELLO");
+});
+
+test("a host transform keeps significant leading spaces (BASIC)", () => {
+  // BASIC prints significant indentation: the host sanitizes only.
+  const { shell, document_ } = openShell({
+    transformOutput: (text) => sanitizeTerminalOutput(text),
+  });
+
+  shell.appendOutput(' 10 PRINT "HI"');
+  shell.appendOutput("   INDENTED");
+  shell.flushOutputRender();
+  const output = document_.getElementById("output");
+  assert.equal(output?.textContent, ' 10 PRINT "HI"   INDENTED');
 });
 
 test("submitted lines are separated from engine output by a blank line", () => {
