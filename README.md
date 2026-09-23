@@ -1,5 +1,8 @@
 # terminal-shell
 
+[![npm version](https://img.shields.io/npm/v/terminal-shell)](https://www.npmjs.com/package/terminal-shell)
+[![license](https://img.shields.io/npm/l/terminal-shell)](./LICENSE)
+
 A small, dependency-free browser terminal for
 [colossal-cave-wasm](https://github.com/minhqdao/colossal-cave-wasm),
 [oregon-fortran-wasm](https://github.com/minhqdao/oregon-fortran-wasm), and
