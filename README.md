@@ -65,7 +65,15 @@ page and engine worker:
 
 `terminal-shell/runner-worker` provides the worker for Emscripten-built
 engines. Interpreters can implement their own worker while using the
-same protocol.
+same protocol. Use it like any npm package:
+
+```js
+import "terminal-shell/runner-worker";
+```
+
+Your bundler (Vite, esbuild, webpack) packs it automatically, including
+inside workers. Without a build step, import the file by path instead
+(`demo/` shows the pattern).
 
 The protocol also provides the shared input buffer used to pass one
 submitted line to the engine.
