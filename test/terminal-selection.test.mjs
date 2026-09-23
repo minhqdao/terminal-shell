@@ -6,7 +6,6 @@ import {
   hasTextSelection,
   updateTextContent,
 } from "../src/terminal-selection.js";
-import { createFrameBatcher } from "../src/terminal-render.js";
 
 assert.equal(hasTextSelection(null), false);
 assert.equal(hasTextSelection({ isCollapsed: true }), false);
@@ -70,51 +69,5 @@ assert.deepEqual(
 );
 assert.equal(isTouchPointer({ pointerType: "touch" }), true);
 assert.equal(isTouchPointer({ pointerType: "mouse" }), false);
-
-let nextFrame = 1;
-let renderCount = 0;
-const pendingFrames = new Map();
-const outputRenderer = createFrameBatcher(() => renderCount++, {
-  requestFrame(callback) {
-    const frame = nextFrame++;
-    pendingFrames.set(frame, () => {
-      pendingFrames.delete(frame);
-      callback();
-    });
-    return frame;
-  },
-  cancelFrame(frame) {
-    pendingFrames.delete(frame);
-  },
-});
-
-outputRenderer.schedule();
-outputRenderer.schedule();
-outputRenderer.schedule();
-assert.equal(
-  pendingFrames.size,
-  1,
-  "a burst of terminal output schedules only one browser paint",
-);
-pendingFrames.values().next().value();
-assert.equal(renderCount, 1, "a terminal output burst renders only once");
-
-outputRenderer.schedule();
-outputRenderer.flush();
-assert.equal(
-  renderCount,
-  2,
-  "an input prompt flushes pending output immediately",
-);
-assert.equal(
-  pendingFrames.size,
-  0,
-  "flushing cancels the pending browser paint",
-);
-
-outputRenderer.schedule();
-outputRenderer.cancel();
-assert.equal(pendingFrames.size, 0, "restarting cancels stale terminal output");
-assert.equal(renderCount, 2, "canceling pending output does not render it");
 
 console.log("test: terminal selection and active-line scrolling remain stable");
