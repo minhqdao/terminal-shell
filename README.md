@@ -4,14 +4,9 @@
 [![npm version](https://img.shields.io/npm/v/terminal-shell)](https://www.npmjs.com/package/terminal-shell)
 [![license](https://img.shields.io/npm/l/terminal-shell)](./LICENSE)
 
-A small, dependency-free browser terminal for
-[colossal-cave-wasm](https://github.com/minhqdao/colossal-cave-wasm),
-[oregon-fortran-wasm](https://github.com/minhqdao/oregon-fortran-wasm), and
-[Basicade](https://github.com/minhqdao/Basicade).
+A small, dependency-free browser terminal for WASM engines with line-oriented I/O. It provides the terminal behavior and a worker protocol for connecting it to an engine, including input handling and mobile keyboard support.
 
-It provides the terminal UI and the protocol used to connect it to a
-game or interpreter. Browser-specific behavior lives here so the
-launchers don't have to duplicate it.
+It currently drives the [colossal-cave-wasm](https://github.com/minhqdao/colossal-cave-wasm), [oregon-fortran-wasm](https://github.com/minhqdao/oregon-fortran-wasm), and [Basicade](https://github.com/minhqdao/Basicade) launchers, but can be used with other browser-based programs as well.
 
 ## Install
 
