@@ -1,7 +1,7 @@
 {
   "name": "terminal-shell",
   "version": "0.1.0",
-  "description": "Dependency-free web terminal for retro-computing WASM games: append-only output, single-line input, bottom-pinned scrolling, and a SharedArrayBuffer runner protocol between page, worker, and Emscripten module.",
+  "description": "Dependency-free browser terminal and worker protocol for line-oriented WASM engines",
   "keywords": [
     "wasm",
     "webassembly",
