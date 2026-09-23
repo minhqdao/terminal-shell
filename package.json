@@ -1,6 +1,6 @@
 {
   "name": "terminal-shell",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Dependency-free browser terminal and worker protocol for line-oriented WASM engines",
   "keywords": [
     "wasm",
