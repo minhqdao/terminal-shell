@@ -105,6 +105,41 @@ test("runnerCommand accepts INIT and both START shapes", () => {
   });
 });
 
+test("runnerCommand validates START buffer shapes and sizes", () => {
+  const buffer = new SharedArrayBuffer(4);
+  const keys = createKeysBuffer();
+  const start = (extra) =>
+    runnerCommand({ type: "START", buffer, keys, ...extra });
+
+  // Present but not shared memory rejects like a missing buffer does.
+  assert.throws(() => start({ buffer: new ArrayBuffer(4) }), /shared memory/);
+  assert.throws(
+    () => start({ keys: new ArrayBuffer(keys.byteLength) }),
+    /shared memory/,
+  );
+
+  // Boundaries: 4 bytes hold the ready slot, 3 do not.
+  assert.equal(start({}).type, "START");
+  assert.throws(
+    () => start({ buffer: new SharedArrayBuffer(3) }),
+    /ready slot/,
+  );
+
+  // Keys must fit a maximum-length line plus its newline, exactly.
+  const exactKeys = createKeysBuffer();
+  assert.equal(start({ keys: exactKeys }).type, "START");
+  assert.throws(
+    () => start({ keys: new SharedArrayBuffer(exactKeys.byteLength - 1) }),
+    /maximum-length line/,
+  );
+
+  // filename without source is as malformed as source without filename.
+  assert.throws(
+    () => runnerCommand({ type: "START", filename: "game.bas", buffer, keys }),
+    TypeError,
+  );
+});
+
 test("runnerCommand rejects malformed commands", () => {
   const buffer = new SharedArrayBuffer(4);
   const keys = createKeysBuffer();
