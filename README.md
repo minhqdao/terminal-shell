@@ -1,5 +1,6 @@
 # terminal-shell
 
+[![CI](https://github.com/minhqdao/terminal-shell/actions/workflows/ci.yml/badge.svg)](https://github.com/minhqdao/terminal-shell/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/terminal-shell)](https://www.npmjs.com/package/terminal-shell)
 [![license](https://img.shields.io/npm/l/terminal-shell)](./LICENSE)
 
