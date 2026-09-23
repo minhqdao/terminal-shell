@@ -42,6 +42,15 @@ function openShell(overrides = {}) {
   globalThis.requestAnimationFrame = window.requestAnimationFrame.bind(window);
   globalThis.cancelAnimationFrame = window.cancelAnimationFrame.bind(window);
   globalThis.localStorage = window.localStorage;
+  // Node 21+ has a global navigator that masks this; Node 20 does not, so
+  // publish jsdom's explicitly -- the shell reads it for touch detection.
+  // Assignment won't do: Node exposes navigator as a getter-only global.
+  Object.defineProperty(globalThis, "navigator", {
+    value: window.navigator,
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  });
   // jsdom has no matchMedia; coarse matches so a touch-shell test could
   // opt in, mirroring the launchers' own harness.
   window.matchMedia = (query) => ({
