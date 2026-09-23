@@ -9,7 +9,6 @@
     "web-worker",
     "emscripten",
     "terminal",
-    "retrocomputing",
     "repl"
   ],
   "type": "module",
