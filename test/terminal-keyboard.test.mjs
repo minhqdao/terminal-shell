@@ -13,6 +13,7 @@ import test from "node:test";
 
 import {
   DRAG_TREMOR_PX,
+  KEYBOARD_HEIGHT_KEY,
   decideReading,
   detectKeyboardMode,
   easeInOut,
@@ -382,4 +383,11 @@ test("shouldBlockNorthDrag: an empty editable never counts as consumable", () =>
     }),
     false,
   );
+});
+
+test("KEYBOARD_HEIGHT_KEY: the stored-measurement key never changes", () => {
+  // Hosts persist the measured soft-keyboard height under this key. A
+  // rename silently orphans every stored measurement, so changing it is a
+  // deliberate act with a migration -- never a casual edit.
+  assert.equal(KEYBOARD_HEIGHT_KEY, "terminal-shell.keyboardHeight");
 });
